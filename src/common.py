@@ -35,10 +35,11 @@ class FuncFactory:
         '''
         self._funcTable = dict()
     
-    def register(self, func_name: str):
+    def register(self, *func_name_list: str):
         def wraper(func):
-            assert not func_name in self._funcTable.keys(), f"{func_name} already exists !!!"
-            self._funcTable[func_name] = func
+            for func_name in func_name_list:
+                assert not func_name in self._funcTable.keys(), f"{func_name} already exists !!!"
+                self._funcTable[func_name] = func
             return func
         return wraper
 
