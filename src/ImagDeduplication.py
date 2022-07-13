@@ -103,13 +103,18 @@ def find_dupl_imgs_from_hashtable(hashtable: Dict[str, float], simi: float, simi
     从图像哈希表中找出重复的图像
     '''
     img_paths = list(hashtable)
+    img_paths = sorted(img_paths)
     assert len(img_paths) > 1, '至少两幅图像'
-    dupl_imgs = set() # 重复图像集合
-    for i in tqdm(range(len(img_paths)-1)):
-        for j in range(i+1, len(img_paths)):
-            hamm_simi = similarity(hashtable[img_paths[i]], hashtable[img_paths[j]])
-            if hamm_simi > simi:
-                dupl_imgs.add(img_paths[j])
+    dupl_imgs = [] # 重复图像集合
+    with tqdm(total=len(img_paths)) as pbar:
+        while len(img_paths) > 1:
+            img0 = img_paths.pop(0)
+            for img in img_paths:
+                val_simi = similarity(hashtable[img0], hashtable[img])
+                if val_simi > simi:
+                    dupl_imgs.append(img0)
+                    break
+            pbar.update()
     return dupl_imgs
 
 
@@ -121,7 +126,7 @@ def main():
     print(f'是否删除: {args.delete}')
     print(f'是否移动: {args.move}')
     print(f'移动到目录: {args.dest}')
-    print('计算图像差异哈希值...')
+    print('计算图像哈希值...')
     files = list_files_from_root(args.root)
     hash = hashFactory.getFunction(args.type)
     hashtable = hash(files)
