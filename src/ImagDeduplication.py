@@ -1,13 +1,13 @@
 import argparse
 import os
-from typing import List, Dict, Set, Callable
+from typing import List, Callable
 
 import numpy as np
 import cv2
 from skimage.metrics import structural_similarity
 from tqdm import tqdm
 
-from common import apply_to_files, move_files, remove_files, list_files_from_root, FuncFactory
+from common import apply_to_file, apply_to_files, move_files, remove_files, FuncFactory, FileList
 
 
 DHASH = 'dhash'
@@ -34,7 +34,6 @@ def get_args():
 
 
 @hashFactory.register(DHASH)
-@apply_to_files('.jpg', '.jpeg')
 def dhash(img_path) -> List[int]:
     '''
     计算图片的差异哈希值
@@ -53,7 +52,6 @@ def dhash(img_path) -> List[int]:
 
 
 @hashFactory.register(AHASH)
-@apply_to_files('.jpg', '.jpeg')
 def ahash(img_path) -> List[int]:
     '''
     计算图片的均值哈希值
@@ -73,7 +71,6 @@ def ahash(img_path) -> List[int]:
 
 
 @hashFactory.register(STRUCTURAL_SIMILARITY)
-@apply_to_files('.jpg', '.jpeg')
 def gray_resize_hash(img_path) -> np.ndarray:
     '''
     计算图片的均值哈希值
@@ -106,19 +103,20 @@ def ssim_similarity(img1, img2) -> float:
     return structural_similarity(img1, img2)
 
 
-def find_dupl_imgs_from_hashtable(hashtable: Dict[str, float], simi: float, similarity: Callable) -> Set[str]:
+def find_dupl_imgs(imgs: List[str], hash: Callable, simi: float, similarity: Callable) -> List[str]:
     '''
-    从图像哈希表中找出重复的图像
+    找出重复的图像
     '''
-    img_paths = list(hashtable)
-    img_paths = sorted(img_paths)
-    assert len(img_paths) > 1, '至少两幅图像'
+    assert len(imgs) > 1, "至少两幅图像"
+    imglist = sorted(imgs)
+    hashlist = apply_to_file(imglist, hash)
     dupl_imgs = [] # 重复图像集合
-    with tqdm(total=len(img_paths)-1) as pbar:
-        while len(img_paths) > 1:
-            img0 = img_paths.pop(0)
-            for img in img_paths:
-                val_simi = similarity(hashtable[img0], hashtable[img])
+    with tqdm(total=len(imglist)-1) as pbar:
+        while len(imglist) > 1:
+            img0 = imglist.pop(0)
+            hash0 = hashlist.pop(0)
+            for i in range(len(imglist)):
+                val_simi = similarity(hashlist[i], hash0)
                 if val_simi > simi:
                     dupl_imgs.append(img0)
                     break
@@ -126,22 +124,12 @@ def find_dupl_imgs_from_hashtable(hashtable: Dict[str, float], simi: float, simi
     return dupl_imgs
 
 
-def main():
-    args = get_args()
-    print(f'类型: {args.type}')
-    print(f"相似度阈值: {args.simi}")
-    print(f'源目录: {args.root}')
-    print(f'是否删除: {args.delete}')
-    print(f'是否移动: {args.move}')
-    print(f'移动到目录: {args.dest}')
-    print('计算图像哈希值...')
-    files = list_files_from_root(args.root)
-    hash = hashFactory.getFunction(args.type)
-    hashtable = hash(files)
-    print(f"共{len(hashtable)}幅图像")
+def main(find_dupl_imgs_func, args):
+    fileList = FileList(args.root)
+    images = fileList.images()
+    print(f"共{len(images)}幅图像")
     print('寻找重复图像...')
-    similarity = simiFactory.getFunction(args.type)
-    dupl_imgs = find_dupl_imgs_from_hashtable(hashtable, simi=args.simi, similarity=similarity)
+    dupl_imgs = apply_to_files(images, func=find_dupl_imgs_func, num_processes=args.num_processes)
     print(f"共找出{len(dupl_imgs)}幅重复图像")
     if args.move:
         print("移动重复图像...")
@@ -154,4 +142,20 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    args = get_args()
+    print(f'类型: {args.type}')
+    print(f"相似度阈值: {args.simi}")
+    print(f'源目录: {args.root}')
+    print(f'是否删除: {args.delete}')
+    print(f'是否移动: {args.move}')
+    print(f'移动到目录: {args.dest}')
+    print(f'进程数: {args.num_processes}')
+
+    hash = hashFactory.getFunction(args.type)
+    similarity = simiFactory.getFunction(args.type)
+
+    # find_dupl_imgs_func = lambda x:find_dupl_imgs(x, hash=hash, simi=args.simi, similarity=similarity)
+    def find_dupl_imgs_func(images):
+        return find_dupl_imgs(images, hash=hash, simi=args.simi, similarity=similarity)
+    
+    main(find_dupl_imgs_func, args)
