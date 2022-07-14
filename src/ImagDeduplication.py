@@ -10,6 +10,12 @@ from tqdm import tqdm
 from common import apply_to_files, move_files, remove_files, list_files_from_root, FuncFactory
 
 
+DHASH = 'dhash'
+AHASH = 'ahash'
+STRUCTURAL_SIMILARITY = 'ssim'
+### more method ###
+
+
 hashFactory = FuncFactory()
 simiFactory = FuncFactory()
 
@@ -21,11 +27,13 @@ def get_args():
     parser.add_argument('-d', '--delete', action='store_true', help='delete or not')
     parser.add_argument('-m', '--move', action='store_true', help='move or not')
     parser.add_argument('--dest', type=str, help='path to move')
+    parser.add_argument('--num_processes', type=int, default=1, help='number of processes, multi process acceleration')
+    ### more arguments ###
     args = parser.parse_args()
     return args
 
 
-@hashFactory.register('dhash')
+@hashFactory.register(DHASH)
 @apply_to_files('.jpg', '.jpeg')
 def dhash(img_path) -> List[int]:
     '''
@@ -44,7 +52,7 @@ def dhash(img_path) -> List[int]:
     return hash
 
 
-@hashFactory.register('ahash')
+@hashFactory.register(AHASH)
 @apply_to_files('.jpg', '.jpeg')
 def ahash(img_path) -> List[int]:
     '''
@@ -64,7 +72,7 @@ def ahash(img_path) -> List[int]:
     return hash
 
 
-@hashFactory.register('ssim')
+@hashFactory.register(STRUCTURAL_SIMILARITY)
 @apply_to_files('.jpg', '.jpeg')
 def gray_resize_hash(img_path) -> np.ndarray:
     '''
@@ -77,7 +85,7 @@ def gray_resize_hash(img_path) -> np.ndarray:
     return hash
 
 
-@simiFactory.register('ahash', 'dhash')
+@simiFactory.register(AHASH, DHASH)
 def hamming_similarity(hash1, hash2) -> float:
     '''
     计算汉明距离，并转化为相似度
@@ -90,7 +98,7 @@ def hamming_similarity(hash1, hash2) -> float:
     return simi / len(hash1)
 
 
-@simiFactory.register('ssim')
+@simiFactory.register(STRUCTURAL_SIMILARITY)
 def ssim_similarity(img1, img2) -> float:
     '''
     计算结构相似度
