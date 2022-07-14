@@ -66,7 +66,7 @@ def ahash(img_path) -> List[int]:
 
 @hashFactory.register('ssim')
 @apply_to_files('.jpg', '.jpeg')
-def gray_resize_hash(img_path) -> List[int]:
+def gray_resize_hash(img_path) -> np.ndarray:
     '''
     计算图片的均值哈希值
     '''
@@ -106,7 +106,7 @@ def find_dupl_imgs_from_hashtable(hashtable: Dict[str, float], simi: float, simi
     img_paths = sorted(img_paths)
     assert len(img_paths) > 1, '至少两幅图像'
     dupl_imgs = [] # 重复图像集合
-    with tqdm(total=len(img_paths)) as pbar:
+    with tqdm(total=len(img_paths)-1) as pbar:
         while len(img_paths) > 1:
             img0 = img_paths.pop(0)
             for img in img_paths:
