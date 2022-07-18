@@ -12,6 +12,7 @@ from common import apply_to_file, apply_to_files, move_files, remove_files, Func
 
 DHASH = 'dhash'
 AHASH = 'ahash'
+PHASH = 'phash'
 STRUCTURAL_SIMILARITY = 'ssim'
 ### more method ###
 
@@ -21,13 +22,13 @@ simiFactory = FuncFactory()
 
 def get_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-r', '--root', type=str, required=True, help='Path to images')
-    parser.add_argument('-t', '--type', type=str, default='dhash', help='select method in [dhash, ahash, ssim], default use dhash')
-    parser.add_argument('-s', '--simi', type=float, default=0.9, help='Similarity of de duplication')
+    parser.add_argument('-r', '--root', type=str, required=True, help='path to images, required')
+    parser.add_argument('-t', '--type', type=str, default='dhash', help='select method in [dhash, ahash, phash, ssim], default dhash')
+    parser.add_argument('-s', '--simi', type=float, default=0.8, help='Similarity to deduplication, default 0.8')
     parser.add_argument('-d', '--delete', action='store_true', help='delete or not')
     parser.add_argument('-m', '--move', action='store_true', help='move or not')
-    parser.add_argument('--dest', type=str, help='path to move')
-    parser.add_argument('--num_processes', type=int, default=1, help='number of processes, multi process acceleration')
+    parser.add_argument('--dest', type=str, default=None, help='path to move to, default none')
+    parser.add_argument('--num_processes', type=int, default=1, help='number of processes, multi process acceleration, default 1')
     ### more arguments ###
     args = parser.parse_args()
     return args
@@ -70,6 +71,22 @@ def ahash(img_path) -> List[int]:
     return hash
 
 
+@hashFactory.register(PHASH)
+def phash(img_path) -> List[int]:
+    '''
+    计算图像的感知哈希值
+    '''
+    gray = cv2.imread(img_path, cv2.IMREAD_GRAYSCALE)
+    w, h = 32, 32
+    resize_gray = cv2.resize(gray, dsize=(w, h))
+    dct = cv2.dct(np.float32(resize_gray))
+    dct_roi = dct[0:8, 0:8]        
+    avreage = np.mean(dct_roi)
+    _phash = (dct_roi>avreage)+0
+    hash = _phash.reshape(1,-1)[0].tolist()
+    return hash
+
+
 @hashFactory.register(STRUCTURAL_SIMILARITY)
 def gray_resize_hash(img_path) -> np.ndarray:
     '''
@@ -82,7 +99,7 @@ def gray_resize_hash(img_path) -> np.ndarray:
     return hash
 
 
-@simiFactory.register(AHASH, DHASH)
+@simiFactory.register(AHASH, DHASH, PHASH)
 def hamming_similarity(hash1, hash2) -> float:
     '''
     计算汉明距离，并转化为相似度
