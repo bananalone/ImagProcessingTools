@@ -31,10 +31,11 @@ def apply_to_files(files: List[str], func: Callable, num_processes: int = 1) -> 
     @files: 文件路径列表
     @return: 列表 [func(file), ...]
     '''
-    assert 0 < num_processes <= cpu_count(), f'进程数{num_processes}不合法'
+    assert 0 < num_processes <= cpu_count(), f'进程数{num_processes}不合法, 不为正数或大于cpu核数'
     # 将文件列表按照进程数有序分成多个子列表
     sublist = []
     batch_size = len(files) // num_processes if len(files) % num_processes == 0 else len(files) // num_processes + 1
+    assert batch_size > 0, f'每一批数据量为{batch_size}'
     for i in range(num_processes):
         start = i * batch_size
         end = start + batch_size
@@ -88,15 +89,21 @@ class FileList:
 
     def suffixes(self, *suffixes: str) -> List[str]:
         '''
-        列出含有后缀的文件，无后缀则列出所有子项路径，如 .avi .jpg .txt等
+        列出含有后缀的文件，无后缀则列出所有子文件路径，如 .avi .jpg .txt等
         '''
         if len(suffixes) == 0:
-            return self._subs
+            return [sub for sub in self._subs if os.path.isfile(sub)]
         files = []
         for sub in self._subs:
             if os.path.isfile(sub) and pathlib.Path(sub).suffix in suffixes:
                 files.append(sub)
         return files
+
+    def files(self) -> List[str]:
+        '''
+        列出所有子文件
+        '''
+        return self.suffixes()
 
     def dirs(self) -> List[str]:
         '''
@@ -142,3 +149,11 @@ def move_files(files: List[str], dest_dir: str):
         if os.path.isfile(file):
             shutil.move(file, os.path.join(dest_dir, os.path.basename(file)))
 
+
+def copy_files(files: List[str], dest_dir: str):
+    '''
+    复制列表里的文件到指定目录
+    '''
+    for file in tqdm(files):
+        if os.path.isfile(file):
+            shutil.copy(file, os.path.join(dest_dir, os.path.basename(file)))
