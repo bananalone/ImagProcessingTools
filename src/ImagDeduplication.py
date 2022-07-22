@@ -7,7 +7,7 @@ import cv2
 from skimage.metrics import structural_similarity
 from tqdm import tqdm
 
-from common import apply_to_file, apply_to_files, move_files, remove_files, FuncFactory, FileList
+from common import apply_to_file, apply_to_files, move_files, print_args, remove_files, FuncFactory, FileList
 
 
 DHASH = 'dhash'
@@ -160,13 +160,7 @@ def main(find_dupl_imgs_func, args):
 
 if __name__ == '__main__':
     args = get_args()
-    print(f'类型: {args.type}')
-    print(f"相似度阈值: {args.simi}")
-    print(f'源目录: {args.root}')
-    print(f'是否删除: {args.delete}')
-    print(f'是否移动: {args.move}')
-    print(f'移动到目录: {args.dest}')
-    print(f'进程数: {args.num_processes}')
+    print_args(args)
 
     hash = hashFactory.getFunction(args.type)
     similarity = simiFactory.getFunction(args.type)

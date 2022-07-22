@@ -1,7 +1,7 @@
 import os, argparse
 from typing import List
 
-from common import FileList, copy_files
+from common import FileList, copy_files, print_args
 
 
 def get_args():
@@ -82,9 +82,5 @@ def main(args):
 
 if __name__ == '__main__':
     args = get_args()
-    print(f'input: {args.input}')
-    print(f'output: {args.output}')
-    print(f'init tasks: {not args.merge}')
-    print(f'merge tasks: {args.merge}')
-    print(f'number of tasks: {args.number}')
+    print_args(args)
     main(args)

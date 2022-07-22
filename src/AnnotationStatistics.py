@@ -4,7 +4,7 @@ from typing import Callable, Dict, List, Union
 
 from tqdm import tqdm
 
-from common import FileList, FuncFactory
+from common import FileList, FuncFactory, print_args
 
 
 K_YOLO = 'yolo'
@@ -90,7 +90,6 @@ def main(args):
 
 if __name__ == '__main__':
     args = get_args()
-    print(f'Input: {args.input}')
-    print(f'Type: {args.type}')
+    print_args(args)
     main(args)
 

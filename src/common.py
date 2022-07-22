@@ -1,3 +1,5 @@
+import argparse
+import inspect
 import os
 import pathlib
 import shutil
@@ -151,6 +153,16 @@ class FileList:
         列出所有视频
         '''
         return self.suffixes('.avi', '.mp4')
+
+
+def print_args(args: argparse.Namespace):
+    '''
+    打印参数
+    '''
+    members = inspect.getmembers(args)
+    for k, v in members:
+        if not str(k).startswith('_'):
+            print(f'{k} : {v}')
 
 
 ##########################
