@@ -1,7 +1,7 @@
 import os
 import pathlib
 import shutil
-from typing import Any, Callable, List
+from typing import Any, Callable, List, Union
 from multiprocessing import Pool, cpu_count
 
 from tqdm import tqdm
@@ -65,7 +65,9 @@ class FuncFactory:
             return func
         return wraper
 
-    def getFunction(self, func_name: str):
+    def getFunction(self, func_name: str) -> Callable:
+        if func_name not in self._funcTable:
+            return None
         return self._funcTable[func_name]
 
 
@@ -74,6 +76,7 @@ class FileList:
         '''
         文件列表类, 按照指定条件过滤并列出root下的所以子项路径
         '''
+        self._root = root
         self._subs = self._list_root(root)
 
     def _list_root(self, root: str) -> List[str]:
@@ -99,6 +102,15 @@ class FileList:
                 files.append(sub)
         return files
 
+    def file(self, name: str) -> Union[str, None]:
+        '''
+        列出指定名称的子文件
+        '''
+        path = os.path.join(self._root, name)
+        if os.path.exists(path):
+            return path
+        return None
+
     def files(self) -> List[str]:
         '''
         列出所有子文件
@@ -114,6 +126,19 @@ class FileList:
             if os.path.isdir(sub):
                 dirs.append(sub)
         return dirs
+
+    def exclude(self, *subs: str) -> List[str]:
+        '''
+        排除指定子路径集, 返回剩余的子路径
+        '''
+        subs = list(subs)
+        path_list = []
+        for ssub in self._subs:
+            if ssub not in subs:
+                path_list.append(ssub)
+            else:
+                subs.remove(ssub)
+        return path_list
 
     def images(self) -> List[str]:
         '''
