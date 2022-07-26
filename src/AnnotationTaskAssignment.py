@@ -34,8 +34,8 @@ def init_tasks(root: str, output: str, number: int):
     '''
     初始化标注任务
     '''
-    assert not os.path.exists(args.output), f'{args.output} already exists'
-    os.makedirs(args.output)
+    assert not os.path.exists(output), f'{output} already exists'
+    os.makedirs(output)
     path_task_list = []
     for i in range(number):
         path_task = os.path.join(output, 'T'+str(i))
@@ -54,8 +54,8 @@ def merge_tasks(root: str, output: str):
     '''
     合并标注任务
     '''
-    assert not os.path.exists(args.output), f'{args.output} already exists'
-    os.makedirs(args.output)
+    assert not os.path.exists(output), f'{output} already exists'
+    os.makedirs(output)
     path_images = os.path.join(output, 'images')
     if not os.path.exists(path_images):
         os.mkdir(path_images)
