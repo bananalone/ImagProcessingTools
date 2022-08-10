@@ -158,8 +158,9 @@ def print_args(args: argparse.Namespace):
     '''
     打印参数
     '''
-    for k, v in vars(args):
-        print(f'{k} : {v}')
+    args = vars(args)
+    for k in args:
+        print(f'{k} : {args[k]}')
 
 
 ##########################
